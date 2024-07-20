@@ -1,0 +1,20 @@
+image: atlassian/default-image:2
+
+pipelines:
+  branches:
+    master:
+      - step:
+          name: 'TOOLS-Deployment to staging'
+          deployment: staging
+          script: 
+            - pipe: atlassian/ssh-run:0.4.1
+              variables:
+                SSH_USER: '$DL_STAGING_SERVER_USER'
+                SERVER: '$DL_STAGING_SERVER'
+                COMMAND: > 
+                  cd $DL_STAGING_SERVER_PATH/$PROJECT_NAME && 
+                  git reset --hard && git pull origin $BITBUCKET_BRANCH && 
+                  sudo chown -R $USER:$USER vendor && 
+                  cd $DOCKER_COMPOSE_PATH &&
+                  docker-compose exec -u $DOCKER_USER $APP_NAME composer install -n &&
+                  docker-compose exec -u $DOCKER_USER $APP_NAME php artisan migrate --force
